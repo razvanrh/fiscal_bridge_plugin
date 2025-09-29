@@ -1,0 +1,2 @@
+-keep class com.datecs.** { *; }
+-dontwarn com.datecs.**
