@@ -54,6 +54,7 @@ repositories {
 dependencies {
     // include any .jar in libs (avoid case-sensitive typos)
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
 
     testImplementation "junit:junit:4.13.2"
     testImplementation "org.mockito:mockito-core:5.0.0"

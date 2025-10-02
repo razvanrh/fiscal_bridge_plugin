@@ -1,4 +1,4 @@
-﻿package ro.masipos.fiscal
+package ro.masipos.fiscal
 
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -6,7 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.usb.UsbManager
+import android.hardware.usb.UsbDevice
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 // Datecs SDK imports (required by device operations)
 import com.datecs.fiscalprinter.SDK.BuildInfo
 import com.datecs.fiscalprinter.SDK.FiscalException
@@ -17,7 +20,15 @@ import com.datecs.fiscalprinter.SDK.model.UserLayer.cmdReport
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicBoolean
 
 class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     private lateinit var channel: MethodChannel
@@ -26,6 +37,9 @@ class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     private val actionUsbPermission = "ro.masipos.fiscal.USB_PERMISSION"
     private var pendingUsbPermissionResult: MethodChannel.Result? = null
     private var receiverRegistered = false
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val pluginJob = SupervisorJob()
+    private val pluginScope = CoroutineScope(pluginJob + Dispatchers.IO)
 
     private val usbPermissionReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -53,6 +67,7 @@ class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         unregisterUsbReceiver()
         channel.setMethodCallHandler(null)
+        pluginJob.cancel()
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -163,19 +178,61 @@ class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             return
         }
 
-        val connector = UsbDeviceConnector(appContext, usbManager, device)
-        connector.connect()
+        val completion = AtomicBoolean(false)
+        fun sendSuccess(data: Map<String, Any?>) {
+            if (completion.compareAndSet(false, true)) {
+                mainHandler.post { result.success(data) }
+            }
+        }
+        fun sendError(code: String, message: String?) {
+            if (completion.compareAndSet(false, true)) {
+                mainHandler.post { result.error(code, message, null) }
+            }
+        }
 
-        PrinterManager.instance.init(connector)
-
-        val info = mapOf(
-            "model" to PrinterManager.instance.modelVendorName,
-            "connector" to PrinterManager.getsConnectorType(),
-            "libVersion" to BuildInfo.VERSION
-        )
-        result.success(info)
+        pluginScope.launch {
+            try {
+                val info = withTimeout(CONNECT_TIMEOUT_MS) {
+                    connectToUsbDevice(usbManager, device)
+                }
+                sendSuccess(info)
+            } catch (e: TimeoutCancellationException) {
+                sendError(ERROR_USB_TIMEOUT, MESSAGE_USB_TIMEOUT)
+            } catch (e: FiscalException) {
+                sendError("FISCAL", e.message)
+            } catch (e: IOException) {
+                if (e.message?.contains("timeout", ignoreCase = true) == true) {
+                    sendError(ERROR_USB_TIMEOUT, MESSAGE_USB_TIMEOUT)
+                } else {
+                    sendError("IO", e.message)
+                }
+            } catch (e: CancellationException) {
+                return@launch
+            } catch (e: Exception) {
+                sendError("ERR", e.message)
+            }
+        }
     }
 
+    private fun connectToUsbDevice(usbManager: UsbManager, device: UsbDevice): Map<String, Any?> {
+        val connector = UsbDeviceConnector(appContext, usbManager, device)
+        return try {
+            connector.connect()
+            PrinterManager.instance.init(connector)
+            mapOf(
+                "model" to PrinterManager.instance.modelVendorName,
+                "connector" to PrinterManager.getsConnectorType(),
+                "libVersion" to BuildInfo.VERSION
+            )
+        } catch (e: Exception) {
+            try {
+                connector.close()
+            } catch (_: Exception) {
+            }
+            PrinterManager.instance.close()
+            throw e
+        }
+    }
     private fun handleUsbDisconnect(result: MethodChannel.Result) {
         PrinterManager.instance.close()
         result.success(true)
@@ -330,4 +387,11 @@ class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             receiverRegistered = false
         }
     }
+    companion object {
+        private const val CONNECT_TIMEOUT_MS = 7000L
+        private const val ERROR_USB_TIMEOUT = "USB_TIMEOUT"
+        private const val MESSAGE_USB_TIMEOUT = "Casa de marcat nu este conectata. Verificati ca este in modul 06 Conexiune PC "
+
+    }
 }
+
