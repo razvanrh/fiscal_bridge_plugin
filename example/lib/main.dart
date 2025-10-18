@@ -140,7 +140,11 @@ class _UsbPrinterDemoState extends State<UsbPrinterDemo> {
   }
 
   Future<void> _callPrintNonFiscal() async {
-    await _guard('printNonFiscalText', () => FiscalBridge.printNonFiscalText('Salut din demo', bold: true, align: 'C'));
+    await _guard('printNonFiscalText', () => FiscalBridge.printNonFiscalText('Salut din demo', bold: true, italic: true, condensed: true, align: 'C'));
+  }
+
+  Future<void> _callDrawerKickOut() async {
+    await _guard('drawerKickOut', FiscalBridge.drawerKickOut);
   }
 
   Future<void> _callNonFiscalClose() async {
@@ -151,6 +155,10 @@ class _UsbPrinterDemoState extends State<UsbPrinterDemo> {
     await _guard('openReceipt', () {
       return FiscalBridge.openReceipt(operatorId: '1', operatorPassword: '0001', tillNo: '1', invoiceNumber: '', customerTaxId: 'RO123456');
     });
+  }
+
+  Future<void> _callFiscalSubtotal() async {
+    await _guard('fiscalSubtotal', () => FiscalBridge.fiscalSubtotal(print: '1', display: '1', discountType: '4', discountValue: '1.00'));
   }
 
   Future<void> _callSellItem() async {
@@ -250,6 +258,7 @@ class _UsbPrinterDemoState extends State<UsbPrinterDemo> {
                       FilledButton(onPressed: _busy ? null : _callSetDateTime, style: buttonStyle, child: const Text('Set date/time')),
                       FilledButton(onPressed: _busy ? null : _callNonFiscalOpen, style: buttonStyle, child: const Text('Non-fiscal open')),
                       FilledButton(onPressed: _busy ? null : _callPrintNonFiscal, style: buttonStyle, child: const Text('Print non-fiscal text')),
+                      FilledButton(onPressed: _busy ? null : _callDrawerKickOut, style: buttonStyle, child: const Text('Drawer kick-out')),
                       FilledButton(onPressed: _busy ? null : _callNonFiscalClose, style: buttonStyle, child: const Text('Non-fiscal close')),
                     ],
                   ),
@@ -262,6 +271,7 @@ class _UsbPrinterDemoState extends State<UsbPrinterDemo> {
                     children: [
                       FilledButton(onPressed: _busy ? null : _callOpenReceipt, style: buttonStyle, child: const Text('Open receipt')),
                       FilledButton(onPressed: _busy ? null : _callSellItem, style: buttonStyle, child: const Text('Sell item')),
+                      FilledButton(onPressed: _busy ? null : _callFiscalSubtotal, style: buttonStyle, child: const Text('Subtotal')),
                       FilledButton(onPressed: _busy ? null : () => _callPayment('0', 1.00), style: buttonStyle, child: const Text('Cash 1.00')),
                       FilledButton(onPressed: _busy ? null : () => _callPayment('1', 2.00), style: buttonStyle, child: const Text('Card 2.00')),
                       FilledButton(onPressed: _busy ? null : _callCashInCashOut, style: buttonStyle, child: const Text('Cash in/out')),

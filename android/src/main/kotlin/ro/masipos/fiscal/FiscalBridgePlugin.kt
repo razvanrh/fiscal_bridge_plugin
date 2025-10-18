@@ -80,9 +80,11 @@ class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 "setDateTime" -> handleSetDateTime(call, result)
                 "nonFiscalOpen" -> handleNonFiscalOpen(result)
                 "printNonFiscalText" -> handlePrintNonFiscalText(call, result)
+                "drawerKickOut" -> handleDrawerKickOut(result)
                 "nonFiscalClose" -> handleNonFiscalClose(call, result)
                 "openReceipt" -> handleOpenReceipt(call, result)
                 "sellItem" -> handleSellItem(call, result)
+                "fiscalSubtotal" -> handleFiscalSubtotal(call, result)
                 "cashInCashOut" -> handleCashInCashOut(call, result)
                 "payment" -> handlePayment(call, result)
 
@@ -253,19 +255,27 @@ class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         result.success(true)
     }
 
+
     private fun handlePrintNonFiscalText(call: MethodCall, result: MethodChannel.Result) {
         val receipt = requireReceiptCommands()
         val text = call.argument<String>("text") ?: ""
         val bold = if (call.argument<Boolean>("bold") == true) '1' else '0'
+        val italic = if (call.argument<Boolean>("italic") == true) '1' else '0'
         val doubleHeight = if (call.argument<Boolean>("doubleH") == true) '1' else '0'
-        val doubleWidth = if (call.argument<Boolean>("doubleW") == true) '1' else '0'
         val underline = if (call.argument<Boolean>("underline") == true) '1' else '0'
-        val align = when (call.argument<String>("align") ?: "L") {
+        val align = when ((call.argument<String>("align") ?: "L").uppercase()) {
             "C" -> '1'
             "R" -> '2'
+            "J" -> '3'
             else -> '0'
         }
-        receipt.PrintNonFiscalText(text, bold, doubleHeight, doubleWidth, underline, align, '0')
+        val condensed = if (call.argument<Boolean>("condensed") == true || call.argument<Boolean>("doubleW") == true) '1' else '0'
+        receipt.PrintNonFiscalText(text, bold, italic, doubleHeight, underline, align, condensed)
+        result.success(true)
+    }
+
+    private fun handleDrawerKickOut(result: MethodChannel.Result) {
+        requireReceiptCommands().DrawerKickOut()
         result.success(true)
     }
 
@@ -284,6 +294,36 @@ class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         val customerTaxId = call.argument<String>("customerTaxId") ?: ""
         val opened = receipt.FiscalOpen(operatorId, operatorPassword, till, invoiceNumber, customerTaxId)
         result.success(opened)
+    }
+
+    private fun handleFiscalSubtotal(call: MethodCall, result: MethodChannel.Result) {
+        val receipt = requireReceiptCommands()
+        val print = call.argument<String>("print")
+            ?: call.argument<Int>("print")?.toString()
+            ?: run {
+                result.error("ARG", "print required", null)
+                return
+            }
+        val display = call.argument<String>("display")
+            ?: call.argument<Int>("display")?.toString()
+            ?: run {
+                result.error("ARG", "display required", null)
+                return
+            }
+        val discountType = call.argument<String>("discountType")
+            ?: call.argument<Int>("discountType")?.toString()
+            ?: run {
+                result.error("ARG", "discountType required", null)
+                return
+            }
+        val discountValue = call.argument<String>("discountValue")
+            ?: call.argument<Double>("discountValue")?.toString()
+            ?: run {
+                result.error("ARG", "discountValue required", null)
+                return
+            }
+        receipt.FiscalSubtotal(print, display, discountType, discountValue)
+        result.success(true)
     }
 
     private fun handleSellItem(call: MethodCall, result: MethodChannel.Result) {
@@ -394,4 +434,5 @@ class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     }
 }
+
 

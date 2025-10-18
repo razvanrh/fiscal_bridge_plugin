@@ -44,36 +44,57 @@ class FiscalBridge {
   static Future<void> printNonFiscalText(
     String text, {
     bool bold = false,
+    bool italic = false,
     bool doubleH = false,
-    bool doubleW = false,
     bool underline = false,
     String align = 'L',
-  }) => _ch.invokeMethod('printNonFiscalText', {
-    'text': text,
-    'bold': bold,
-    'doubleH': doubleH,
-    'doubleW': doubleW,
-    'underline': underline,
-    'align': align,
-  });
+    bool condensed = false,
+    @Deprecated('Use condensed instead') bool? doubleW,
+  }) =>
+      _ch.invokeMethod('printNonFiscalText', {
+        'text': text,
+        'bold': bold,
+        'italic': italic,
+        'doubleH': doubleH,
+        'underline': underline,
+        'align': align,
+        'condensed': doubleW ?? condensed,
+      });
+
+  static Future<void> drawerKickOut() =>
+      _ch.invokeMethod('drawerKickOut');
 
   static Future<void> nonFiscalClose({bool cut = true}) =>
       _ch.invokeMethod('nonFiscalClose', {'cut': cut});
 
   // Fiscal
+  static Future<void> fiscalSubtotal({
+    required String print,
+    required String display,
+    required String discountType,
+    required String discountValue,
+  }) =>
+      _ch.invokeMethod('fiscalSubtotal', {
+        'print': print,
+        'display': display,
+        'discountType': discountType,
+        'discountValue': discountValue,
+      });
+
   static Future<void> openReceipt({
     required String operatorId,
     required String operatorPassword,
     required String tillNo,
     String? invoiceNumber,
     String? customerTaxId,
-  }) => _ch.invokeMethod('openReceipt', {
-    'operatorId': operatorId,
-    'operatorPassword': operatorPassword,
-    'tillNo': tillNo,
-    'invoiceNumber': invoiceNumber ?? '',
-    'customerTaxId': customerTaxId ?? '',
-  });
+  }) =>
+      _ch.invokeMethod('openReceipt', {
+        'operatorId': operatorId,
+        'operatorPassword': operatorPassword,
+        'tillNo': tillNo,
+        'invoiceNumber': invoiceNumber ?? '',
+        'customerTaxId': customerTaxId ?? '',
+      });
 
   static Future<void> sellItem({
     required String name,
@@ -128,3 +149,4 @@ class FiscalBridge {
   static Future<Map<String, dynamic>> getStatus() async =>
       (await _ch.invokeMethod('getStatus') as Map).cast<String, dynamic>();
 }
+
