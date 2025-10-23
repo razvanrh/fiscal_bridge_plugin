@@ -140,7 +140,26 @@ class _UsbPrinterDemoState extends State<UsbPrinterDemo> {
   }
 
   Future<void> _callPrintNonFiscal() async {
-    await _guard('printNonFiscalText', () => FiscalBridge.printNonFiscalText('Salut din demo', bold: true, italic: true, condensed: true, align: 'C'));
+    await _guard(
+      'printNonFiscalText',
+      () => FiscalBridge.printNonFiscalText('Salut din demo', doubleH: true, bold: true, italic: true, condensed: false, align: 'C'),
+    );
+  }
+
+  Future<void> _callPrintFiscal() async {
+    await _guard(
+      'printFiscalText',
+      () => FiscalBridge.printFiscalText(
+        'Comanda: #305',
+        doubleH: true,
+        bold: false,
+        italic: true,
+        condensed: false,
+        align:
+            'L'
+            '',
+      ),
+    );
   }
 
   Future<void> _callDrawerKickOut() async {
@@ -153,7 +172,9 @@ class _UsbPrinterDemoState extends State<UsbPrinterDemo> {
 
   Future<void> _callOpenReceipt() async {
     await _guard('openReceipt', () {
-      return FiscalBridge.openReceipt(operatorId: '1', operatorPassword: '0001', tillNo: '1', invoiceNumber: '', customerTaxId: 'RO123456');
+      //return FiscalBridge.openReceipt(operatorId: '1', operatorPassword: '0001', tillNo: '1', invoiceNumber: '', customerTaxId: '123456');
+      //daca vreau sa tiparesc cui pe bon trebuie ca invoiceNumber sa fie I
+      return FiscalBridge.openReceipt(operatorId: '1', operatorPassword: '0001', tillNo: '1', invoiceNumber: 'I', customerTaxId: 'RO123456');
     });
   }
 
@@ -258,6 +279,7 @@ class _UsbPrinterDemoState extends State<UsbPrinterDemo> {
                       FilledButton(onPressed: _busy ? null : _callSetDateTime, style: buttonStyle, child: const Text('Set date/time')),
                       FilledButton(onPressed: _busy ? null : _callNonFiscalOpen, style: buttonStyle, child: const Text('Non-fiscal open')),
                       FilledButton(onPressed: _busy ? null : _callPrintNonFiscal, style: buttonStyle, child: const Text('Print non-fiscal text')),
+                      FilledButton(onPressed: _busy ? null : _callPrintFiscal, style: buttonStyle, child: const Text('Print fiscal text')),
                       FilledButton(onPressed: _busy ? null : _callDrawerKickOut, style: buttonStyle, child: const Text('Drawer kick-out')),
                       FilledButton(onPressed: _busy ? null : _callNonFiscalClose, style: buttonStyle, child: const Text('Non-fiscal close')),
                     ],

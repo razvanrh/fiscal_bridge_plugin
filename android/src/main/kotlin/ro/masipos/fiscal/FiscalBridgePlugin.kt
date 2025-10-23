@@ -80,6 +80,7 @@ class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 "setDateTime" -> handleSetDateTime(call, result)
                 "nonFiscalOpen" -> handleNonFiscalOpen(result)
                 "printNonFiscalText" -> handlePrintNonFiscalText(call, result)
+                "printFiscalText" -> handlePrintFiscalText(call, result)
                 "drawerKickOut" -> handleDrawerKickOut(result)
                 "nonFiscalClose" -> handleNonFiscalClose(call, result)
                 "openReceipt" -> handleOpenReceipt(call, result)
@@ -273,6 +274,27 @@ class FiscalBridgePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         receipt.PrintNonFiscalText(text, bold, italic, doubleHeight, underline, align, condensed)
         result.success(true)
     }
+
+    private fun handlePrintFiscalText(call: MethodCall, result: MethodChannel.Result) {
+        val receipt = requireReceiptCommands()
+        val text = call.argument<String>("text") ?: ""
+        val bold = if (call.argument<Boolean>("bold") == true) "1" else "0"
+        val italic = if (call.argument<Boolean>("italic") == true) "1" else "0"
+        val doubleHeight = if (call.argument<Boolean>("doubleH") == true) "1" else "0"
+        val underline = if (call.argument<Boolean>("underline") == true) "1" else "0"
+        val align = when ((call.argument<String>("align") ?: "L").uppercase()) {
+            "C" -> "1"
+            "R" -> "2"
+            "J" -> "3"
+            else -> "0"
+        }
+        receipt.PrintFiscalText(text, bold, italic, doubleHeight, underline, align)
+        result.success(true)
+    }
+
+
+
+
 
     private fun handleDrawerKickOut(result: MethodChannel.Result) {
         requireReceiptCommands().DrawerKickOut()

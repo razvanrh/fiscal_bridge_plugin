@@ -6,16 +6,11 @@ class FiscalBridge {
   // USB
   static Future<List<Map<String, dynamic>>> usbListDevices() async {
     final list = await _ch.invokeMethod('usbListDevices');
-    return (list as List)
-        .map((e) => (e as Map).cast<String, dynamic>())
-        .toList();
+    return (list as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
   }
 
   static Future<bool> usbRequestPermission(int vid, int pid) async {
-    final ok = await _ch.invokeMethod('usbRequestPermission', {
-      'vid': vid,
-      'pid': pid,
-    });
+    final ok = await _ch.invokeMethod('usbRequestPermission', {'vid': vid, 'pid': pid});
     return ok == true;
   }
 
@@ -50,36 +45,42 @@ class FiscalBridge {
     String align = 'L',
     bool condensed = false,
     @Deprecated('Use condensed instead') bool? doubleW,
-  }) =>
-      _ch.invokeMethod('printNonFiscalText', {
-        'text': text,
-        'bold': bold,
-        'italic': italic,
-        'doubleH': doubleH,
-        'underline': underline,
-        'align': align,
-        'condensed': doubleW ?? condensed,
-      });
+  }) => _ch.invokeMethod('printNonFiscalText', {
+    'text': text,
+    'bold': bold,
+    'italic': italic,
+    'doubleH': doubleH,
+    'underline': underline,
+    'align': align,
+    'condensed': doubleW ?? condensed,
+  });
 
-  static Future<void> drawerKickOut() =>
-      _ch.invokeMethod('drawerKickOut');
+  static Future<void> printFiscalText(
+    String text, {
+    bool bold = false,
+    bool italic = false,
+    bool doubleH = false,
+    bool underline = false,
+    String align = 'L',
+    bool condensed = false,
+    @Deprecated('Use condensed instead') bool? doubleW,
+  }) => _ch.invokeMethod('printFiscalText', {
+    'text': text,
+    'bold': bold,
+    'italic': italic,
+    'doubleH': doubleH,
+    'underline': underline,
+    'align': align,
+    'condensed': doubleW ?? condensed,
+  });
 
-  static Future<void> nonFiscalClose({bool cut = true}) =>
-      _ch.invokeMethod('nonFiscalClose', {'cut': cut});
+  static Future<void> drawerKickOut() => _ch.invokeMethod('drawerKickOut');
+
+  static Future<void> nonFiscalClose({bool cut = true}) => _ch.invokeMethod('nonFiscalClose', {'cut': cut});
 
   // Fiscal
-  static Future<void> fiscalSubtotal({
-    required String print,
-    required String display,
-    required String discountType,
-    required String discountValue,
-  }) =>
-      _ch.invokeMethod('fiscalSubtotal', {
-        'print': print,
-        'display': display,
-        'discountType': discountType,
-        'discountValue': discountValue,
-      });
+  static Future<void> fiscalSubtotal({required String print, required String display, required String discountType, required String discountValue}) =>
+      _ch.invokeMethod('fiscalSubtotal', {'print': print, 'display': display, 'discountType': discountType, 'discountValue': discountValue});
 
   static Future<void> openReceipt({
     required String operatorId,
@@ -87,14 +88,13 @@ class FiscalBridge {
     required String tillNo,
     String? invoiceNumber,
     String? customerTaxId,
-  }) =>
-      _ch.invokeMethod('openReceipt', {
-        'operatorId': operatorId,
-        'operatorPassword': operatorPassword,
-        'tillNo': tillNo,
-        'invoiceNumber': invoiceNumber ?? '',
-        'customerTaxId': customerTaxId ?? '',
-      });
+  }) => _ch.invokeMethod('openReceipt', {
+    'operatorId': operatorId,
+    'operatorPassword': operatorPassword,
+    'tillNo': tillNo,
+    'invoiceNumber': invoiceNumber ?? '',
+    'customerTaxId': customerTaxId ?? '',
+  });
 
   static Future<void> sellItem({
     required String name,
@@ -121,32 +121,21 @@ class FiscalBridge {
     });
   }
 
-  static Future<Map<String, dynamic>> cashInCashOut({
-    required double amount,
-    bool foreignCurrency = false,
-  }) async {
-    final result = await _ch.invokeMethod('cashInCashOut', {
-      'amount': amount,
-      'foreignCurrency': foreignCurrency,
-    });
+  static Future<Map<String, dynamic>> cashInCashOut({required double amount, bool foreignCurrency = false}) async {
+    final result = await _ch.invokeMethod('cashInCashOut', {'amount': amount, 'foreignCurrency': foreignCurrency});
     return (result as Map).cast<String, dynamic>();
   }
 
-  static Future<void> payment({required String type, required double amount}) =>
-      _ch.invokeMethod('payment', {'type': type, 'amount': amount});
+  static Future<void> payment({required String type, required double amount}) => _ch.invokeMethod('payment', {'type': type, 'amount': amount});
 
   static Future<void> closeReceipt() => _ch.invokeMethod('closeReceipt');
 
   static Future<void> cancelReceipt() => _ch.invokeMethod('cancelReceipt');
 
   // Reports & status
-  static Future<int> reportX() async =>
-      (await _ch.invokeMethod('reportX')) as int;
+  static Future<int> reportX() async => (await _ch.invokeMethod('reportX')) as int;
 
-  static Future<int> reportZ() async =>
-      (await _ch.invokeMethod('reportZ')) as int;
+  static Future<int> reportZ() async => (await _ch.invokeMethod('reportZ')) as int;
 
-  static Future<Map<String, dynamic>> getStatus() async =>
-      (await _ch.invokeMethod('getStatus') as Map).cast<String, dynamic>();
+  static Future<Map<String, dynamic>> getStatus() async => (await _ch.invokeMethod('getStatus') as Map).cast<String, dynamic>();
 }
-
